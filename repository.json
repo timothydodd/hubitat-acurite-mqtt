@@ -1,0 +1,13 @@
+{
+  "author": "Tim Dodd",
+  "gitHubUrl": "https://github.com/timothydodd",
+  "packages": [
+    {
+      "id": "9c85b00b-b57f-47e8-bf3a-8b01692a0377",
+      "name": "AcuRite Temperature Sensor Mqtt Driver",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/timothydodd/hubitat-acurite-mqtt/main/packageManifest.json",
+      "description": "A device driver that integrates Acurite sensors via MQTT and RTL_433. It provides real-time temperature and humidity readings using MQTT."
+    }
+  ]
+}

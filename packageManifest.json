@@ -1,0 +1,17 @@
+{
+  "packageName": "AcuRite Temperature Sensor Mqtt Driver",
+  "author": "Tim Dodd",
+  "version": "1.0",
+  "minimumHEVersion": "2.1.9",
+  "dateReleased": "2024-09-05",
+  "drivers": [
+    {
+      "id": "de325ef8-ab84-4b8c-904f-9507f4352c48",
+      "name": "Acurite MQTT",
+      "namespace": "dodd",
+      "location": "https://raw.githubusercontent.com/timothydodd/hubitat-acurite-mqtt/main/acurite-mqtt-driver.groovy",
+      "required": true,
+      "version": "1.0"
+    }
+  ]
+}

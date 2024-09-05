@@ -56,6 +56,9 @@ Enable debug logging in the device preferences to get more detailed logs in the 
 ## Contributing
 Feel free to fork this repository and submit pull requests to contribute to this project.
 
+##Disclaimer
+This project is not affiliated with or endorsed by Acurite. 
+
 ## License
 This project is licensed under the MIT License. See the LICENSE file for more details.
 

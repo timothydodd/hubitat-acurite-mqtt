@@ -1,12 +1,12 @@
 /*
- *  Acurite MQTT Sensor
+ *  AcuRite Temperature Sensor Mqtt Driver
  *  Device Driver for Hubitat Elevation hub
  * https://www.robododd.com
  * Control Acurite Mqtt temp
  * 2023-09-05
  */
 metadata {
-    definition (name: "Acurite MQTT", namespace: "dodd", author: "Tim Dodd") {
+    definition (name: "AcuRite Temperature Sensor Mqtt Driver", namespace: "dodd", author: "Tim Dodd") {
         capability "Initialize"
         capability "Sensor"
         capability "TemperatureMeasurement"

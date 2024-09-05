@@ -141,7 +141,6 @@ def mqttClientStatus(String status){
                 case 'Connection succeeded':
                     state.remove('delay')
                     // without this delay the `parse` method is never called
-                    // (it seems that there needs to be some delay after connection to subscribe)
                     runInMillis(1000, subscribe)
                     break
             }

@@ -1,108 +1,107 @@
 /*
- *  AcuRite Temperature Sensor Mqtt Driver
- *  Device Driver for Hubitat Elevation hub
- * https://www.robododd.com
- * Control Acurite Mqtt temp
- * 2023-09-05
- */
+*  AcuRite Temperature Sensor Mqtt Driver
+*  Device Driver for Hubitat Elevation hub
+* https://www.robododd.com
+* Control Acurite Mqtt temp
+* 2023-09-05 Initial version
+* 2025-03-20 Updated to support multiple Acurite models and added wind speed for 3n1 model
+*/
 metadata {
     definition (name: "AcuRite Temperature Sensor Mqtt Driver", namespace: "dodd", author: "Tim Dodd") {
         capability "Initialize"
         capability "Sensor"
         capability "TemperatureMeasurement"
-        capability "Relative Humidity Measurement"
+        capability "RelativeHumidityMeasurement"      
+        attribute  "windSpeed", 'NUMBER' // Added for Acurite-3n1
     }
 }
-
 preferences {
     section("URIs") {
         input "mqttBroker", "string", title: "MQTT Broker Address:Port", required: true
-		input "mqttTopic", "string", title: "MQTT Topic", description: "(e.g. test/Acurite-Tower/9932)", required: true
+        input "mqttTopic", "string", title: "MQTT Topic", description: "(e.g. test/Acurite-Tower/9932 or test/Acurite-3n1/12345)", required: true
+        input "sensorModel", "enum", title: "Sensor Model", options: ["Acurite-Tower", "Acurite-3n1"], defaultValue: "Acurite-Tower", required: true
         input "tempSmoothing", "integer", title: "Temperature smoothing", description: "Number of readings to average for smoother temperature changes", required: true, defaultValue: 5
         input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
     }
 }
-
-
-
-
 def installed() {
     logDebug "Installed"
 }
-
 def parse(String description) {
     //logDebug description
-	
+    
     mqtt = interfaces.mqtt.parseMessage(description)
-	//logDebug mqtt
-	
-	json = new groovy.json.JsonSlurper().parseText(mqtt.payload)
-	logDebug json
-
+    //logDebug mqtt
+    
+    json = new groovy.json.JsonSlurper().parseText(mqtt.payload)
+    logDebug json
     def events = [:]
     
-
-        // temperature reading
-     def temp = smoothenTemperatureChange(convertCelciusToLocalTemp(json.temperature_C))
-
-     events.temperature = [name: 'temperature', value: temp, unit: "°${location.temperatureScale}", descriptionText: "Temperature is ${temp}°${location.temperatureScale}", translatable:true]
-     events.humidity = [name: 'humidity', value: json.humidity, unit: "%", descriptionText: "Humidity is ${json.humidity}%", translatable:true]
-
+    // Process temperature based on model
+    def temp
+    if (sensorModel == "Acurite-Tower") {
+        // Tower model uses Celsius
+        temp = smoothenTemperatureChange(convertCelciusToLocalTemp(json.temperature_C))
+    } else if (sensorModel == "Acurite-3n1") {
+        // 3n1 model uses Fahrenheit 
+        temp = smoothenTemperatureChange(convertFahrenheitToLocalTemp(json.temperature_F))
+    }
+    
+    events.temperature = [name: 'temperature', value: temp, unit: "°${location.temperatureScale}", descriptionText: "Temperature is ${temp}°${location.temperatureScale}", translatable:true]
+    events.humidity = [name: 'humidity', value: json.humidity, unit: "%", descriptionText: "Humidity is ${json.humidity}%", translatable:true]
+    
+    // Add wind speed for 3n1 model
+    if (sensorModel == "Acurite-3n1" && json.wind_avg_mi_h != null) {
+        def windSpeed = json.wind_avg_mi_h
+        events.windSpeed = [name: 'windSpeed', value: windSpeed, unit: "MPH", descriptionText: "Wind speed is ${windSpeed} MPH", translatable:true]
+    }
     events.each {
         sendEvent(it.value)
     }
 }
-
 def smoothenTemperatureChange(temp) {
     // average the temperature to avoid jumping up and down between two values, e.g. between 22 and 23 when temperature is 22.5
     def averageTemp = state.averageTemperature ? state.averageTemperature : temp
     def smoothing = tempSmoothing ? tempSmoothing.toInteger() : 5
     averageTemp = Math.round((temp + averageTemp * smoothing) / (smoothing + 1) * 1000000000)/1000000000
     state.averageTemperature = averageTemp
-    temp = Math.round(averageTemp)
+    return Math.round(averageTemp)  // Added return statement to fix missing return value
 }
-
-
 def convertCelciusToLocalTemp(temp) {
     return (location.temperatureScale == "F") ? ((temp * 1.8) + 32) : temp
 }
-
+def convertFahrenheitToLocalTemp(temp) {
+    return (location.temperatureScale == "C") ? ((temp - 32) / 1.8) : temp
+}
 def convertLocalToCelsiusTemp(temp) {
     return (location.temperatureScale == "F") ? Math.round((temp - 32) / 1.8) : temp
 }
-
 def updated() {
     logDebug "Updated"
     
     initialize()
 }
-
 def uninstalled() {
     logDebug "Uninstalled"
     disconnect()
 }
-
 def disconnect() {
     log.info "Disconnecting from MQTT"
     interfaces.mqtt.unsubscribe(settings.mqttTopic)
     interfaces.mqtt.disconnect()
 }
-
 def delayedConnect() {
     // increase delay by 5 seconds every time, to max of 1 hour
     if (state.delay < 3600)
         state.delay = (state.delay ?: 0) + 5
-
     logDebug "Reconnecting in ${state.delay}s"
     runIn(state.delay, connect)
 }
-
 def initialize() {
     logDebug "Initialize"
     state.delay = 0
     connect()
 }
-
 def connect() {
     try {
         // open connection
@@ -114,12 +113,10 @@ def connect() {
         delayedConnect()
     }
 }
-
 def subscribe() {
     interfaces.mqtt.subscribe(settings.mqttTopic)
     logDebug "Subscribed to topic ${settings.mqttTopic}"
 }
-
 def mqttClientStatus(String status){
     // This method is called with any status messages from the MQTT client connection (disconnections, errors during connect, etc) 
     // The string that is passed to this method with start with "Error" if an error occurred or "Status" if this is just a status message.
@@ -150,11 +147,9 @@ def mqttClientStatus(String status){
             break
     }
 }
-
 def logInfo(msg) {
     if (logEnable) log.info msg
 }
-
 def logDebug(msg) {
     if (logEnable) log.debug msg
 }

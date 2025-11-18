@@ -29,32 +29,42 @@ def installed() {
 }
 def parse(String description) {
     //logDebug description
-    
+
     mqtt = interfaces.mqtt.parseMessage(description)
     //logDebug mqtt
-    
+
     json = new groovy.json.JsonSlurper().parseText(mqtt.payload)
     logDebug json
     def events = [:]
-    
+
     // Process temperature based on model
     def temp
     if (sensorModel == "Acurite-Tower") {
         // Tower model uses Celsius
         temp = smoothenTemperatureChange(convertCelciusToLocalTemp(json.temperature_C))
     } else if (sensorModel == "Acurite-3n1") {
-        // 3n1 model uses Fahrenheit 
+        // 3n1 model uses Fahrenheit
         temp = smoothenTemperatureChange(convertFahrenheitToLocalTemp(json.temperature_F))
     }
-    
-    events.temperature = [name: 'temperature', value: temp, unit: "°${location.temperatureScale}", descriptionText: "Temperature is ${temp}°${location.temperatureScale}", translatable:true]
-    events.humidity = [name: 'humidity', value: json.humidity, unit: "%", descriptionText: "Humidity is ${json.humidity}%", translatable:true]
-    
-    // Add wind speed for 3n1 model
+
+    // Only add event if temperature has changed
+    if (device.currentValue("temperature") != temp) {
+        events.temperature = [name: 'temperature', value: temp, unit: "°${location.temperatureScale}", descriptionText: "Temperature is ${temp}°${location.temperatureScale}", translatable:true]
+    }
+
+    // Only add event if humidity has changed
+    if (device.currentValue("humidity") != json.humidity) {
+        events.humidity = [name: 'humidity', value: json.humidity, unit: "%", descriptionText: "Humidity is ${json.humidity}%", translatable:true]
+    }
+
+    // Add wind speed for 3n1 model only if changed
     if (sensorModel == "Acurite-3n1" && json.wind_avg_mi_h != null) {
         def windSpeed = json.wind_avg_mi_h
-        events.windSpeed = [name: 'windSpeed', value: windSpeed, unit: "MPH", descriptionText: "Wind speed is ${windSpeed} MPH", translatable:true]
+        if (device.currentValue("windSpeed") != windSpeed) {
+            events.windSpeed = [name: 'windSpeed', value: windSpeed, unit: "MPH", descriptionText: "Wind speed is ${windSpeed} MPH", translatable:true]
+        }
     }
+
     events.each {
         sendEvent(it.value)
     }

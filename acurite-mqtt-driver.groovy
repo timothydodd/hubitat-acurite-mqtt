@@ -5,6 +5,7 @@
 * Control Acurite Mqtt temp
 * 2023-09-05 Initial version
 * 2025-03-20 Updated to support multiple Acurite models and added wind speed for 3n1 model
+* 2025-11-18 Updated Parse even sending. Won't send events if value has not changed
 */
 metadata {
     definition (name: "AcuRite Temperature Sensor Mqtt Driver", namespace: "dodd", author: "Tim Dodd") {

@@ -8,6 +8,13 @@
       "category": "Integrations",
       "location": "https://raw.githubusercontent.com/timothydodd/hubitat-acurite-mqtt/main/packageManifest.json",
       "description": "A device driver that integrates Acurite sensors via MQTT and RTL_433. It provides real-time temperature and humidity readings using MQTT."
+    },
+    {
+      "id": "64d7d318-88f5-42b3-844d-d65c6a9c9255",
+      "name": "WLED MQTT LED Driver Plus",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/timothydodd/hubitat-wled-mqtt/master/packageManifest.json",
+      "description": "A driver for controlling WLED devices over MQTT.  Features include on/off, dimming, RGB color control, color temperature, effects with speed/intensity, palettes, presets, and multi-segment support."
     }
   ]
 }
